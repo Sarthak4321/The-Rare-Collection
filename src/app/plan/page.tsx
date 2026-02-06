@@ -382,34 +382,73 @@ export default function DatePlanningRedesign() {
     )}>
       <GrainOverlay />
 
-      {/* Global Progress Indicator */}
-      <div className="fixed top-4 md:top-12 left-1/2 -translate-x-1/2 z-[100] flex items-center gap-2 md:gap-4 bg-black/60 md:bg-black/40 backdrop-blur-3xl px-5 md:px-8 py-2.5 md:py-4 rounded-full md:rounded-none border border-white/10 shadow-2xl scale-90 md:scale-100">
+      {/* Unified Mobile Navigation Pill (Hero Pill) - Replaces fragmented elements */}
+      {step > 0 && (
+        <div className="md:hidden fixed top-6 left-1/2 -translate-x-1/2 z-[120] w-[90%] max-w-[360px]">
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="bg-black/90 backdrop-blur-2xl rounded-full p-1.5 border border-white/10 flex items-center justify-between shadow-2xl"
+          >
+            {/* Unified Back Button */}
+            <button
+              onClick={() => setStep(Math.max(0, step - 1))}
+              className="bg-white/10 hover:bg-white/20 px-4 py-2.5 rounded-full flex items-center gap-2.5 transition-all active:scale-90"
+            >
+              <ChevronRight className="rotate-180 w-3 h-3 text-white" />
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white">Back</span>
+            </button>
+
+            {/* Unified Phase Status */}
+            <div className="flex items-center gap-4 pr-3.5">
+              <div className="flex gap-1.5 items-center">
+                {[0, 1, 2].map((s) => (
+                  <div
+                    key={s}
+                    className={cn(
+                      "h-[2px] rounded-full transition-all duration-700",
+                      step - 1 === s ? "w-6 bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" : "w-2.5 bg-white/20"
+                    )}
+                  />
+                ))}
+              </div>
+              <div className="w-px h-3.5 bg-white/20" />
+              <div className="flex flex-col items-start leading-none gap-0.5">
+                <span className="text-[7px] font-black uppercase tracking-[0.1em] text-white/40">Phase</span>
+                <span className="text-[10px] font-black text-white">{step + 1}</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Desktop Navigation Elements (Unchanged) */}
+      <div className="hidden md:flex fixed top-12 left-1/2 -translate-x-1/2 z-[100] items-center gap-4 bg-black/40 backdrop-blur-3xl px-8 py-4 border border-white/10 shadow-2xl">
         {[0, 1, 2, 3].map((s) => (
-          <div key={s} className="flex items-center gap-1.5 md:gap-2">
+          <div key={s} className="flex items-center gap-2">
             <div
               className={cn(
                 "h-[2px] transition-all duration-1000 ease-[0.32,0.72,0,1]",
-                step === s ? "w-6 md:w-12 bg-rose-500" : (step > s ? "w-3 md:w-6 bg-white/60" : "w-3 md:w-6 bg-white/20")
+                step === s ? "w-12 bg-rose-500" : (step > s ? "w-6 bg-white/60" : "w-6 bg-white/20")
               )}
             />
           </div>
         ))}
-        <div className="ml-2 md:ml-4 h-4 w-px bg-white/10" />
-        <span className="text-[7px] md:text-[10px] font-black uppercase tracking-[0.4em] md:tracking-[0.5em] text-white">
+        <div className="ml-4 h-4 w-px bg-white/10" />
+        <span className="text-[10px] font-black uppercase tracking-[0.5em] text-white">
           Phase {step + 1}
         </span>
       </div>
 
-      {/* Global Navigation */}
       {step > 0 && step < 3 && (
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={() => setStep(step - 1)}
-          className="fixed top-6 md:top-12 left-6 md:left-12 z-[100] flex items-center gap-2 md:gap-4 px-4 md:px-8 py-3 md:py-4 rounded-full md:rounded-none bg-black/40 backdrop-blur-3xl border border-white/10 text-white/40 hover:text-white hover:border-white/40 transition-all group"
+          className="hidden md:flex fixed top-12 left-12 z-[100] items-center gap-4 px-8 py-4 bg-black/40 backdrop-blur-3xl border border-white/10 text-white/40 hover:text-white hover:border-white/40 transition-all group"
         >
-          <ChevronRight className="rotate-180 w-3 h-3 md:w-4 md:h-4 group-hover:-translate-x-1 md:group-hover:-translate-x-2 transition-transform" />
-          <span className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] md:tracking-[0.4em]">Back</span>
+          <ChevronRight className="rotate-180 w-4 h-4 group-hover:-translate-x-2 transition-transform" />
+          <span className="text-[10px] font-black uppercase tracking-[0.4em]">Back</span>
         </motion.button>
       )}
 
@@ -485,48 +524,22 @@ export default function DatePlanningRedesign() {
 
             <div className="relative z-10 px-6 text-center max-w-4xl mx-auto">
               <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1.5, ease: SOFT_EASE, delay: 0.5 }}
                 className="text-5xl sm:text-7xl md:text-[8rem] font-serif font-black mb-4 md:mb-10 tracking-tighter leading-[0.9] text-white drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]"
               >
-                <motion.span
-                  className="block"
-                  initial={{ clipPath: "polygon(0 100%, 100% 100%, 100% 100%, 0 100%)" }}
-                  animate={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
-                  transition={{ duration: 1.2, delay: 0.6, ease: SOFT_EASE }}
-                >
-                  Matched.
-                </motion.span>
-                <br />
-                <motion.span
-                  initial={{ clipPath: "polygon(0 100%, 100% 100%, 100% 100%, 0 100%)" }}
-                  animate={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 100%)" }}
-                  transition={{ duration: 1.2, delay: 0.9, ease: SOFT_EASE }}
-                  className={cn(
-                    "bg-clip-text text-transparent bg-gradient-to-r italic font-light inline-block pr-4",
-                    selectedVibe.gradient
-                  )}
+                Matched. <br />
+                <span className={cn(
+                  "bg-clip-text text-transparent bg-gradient-to-r italic font-light inline-block pr-4",
+                  selectedVibe.gradient
+                )}
                   style={{
                     filter: `drop-shadow(0 0 25px ${selectedVibe.vibeColor}66)`
                   }}
                 >
-                  Now what
-                  <motion.span
-                    animate={{
-                      y: [0, -8, 0],
-                      rotate: [0, 10, 0]
-                    }}
-                    transition={{
-                      duration: 3,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                    className="inline-block origin-bottom ml-2"
-                  >
-                    ?
-                  </motion.span>
-                </motion.span>
+                  Now what?
+                </span>
               </motion.h1>
 
               <motion.div
@@ -535,7 +548,7 @@ export default function DatePlanningRedesign() {
                 transition={{ duration: 1.2, ease: SOFT_EASE, delay: 0.8 }}
                 className="flex flex-col items-center gap-6"
               >
-                <p className="text-base md:text-3xl font-light text-white tracking-[0.05em] md:tracking-[0.1em] max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_10px_rgba(0,0,0,0.5)] px-4 md:px-0">
+                <p className="text-base md:text-3xl font-light text-white opacity-90 tracking-[0.05em] md:tracking-[0.1em] max-w-2xl mx-auto leading-relaxed drop-shadow-lg px-4 md:px-0">
                   You did the hard part. Now let us turn that spark into a cinematic story.
                   End the &quot;Where should we go?&quot; loop forever.
                 </p>
@@ -563,20 +576,21 @@ export default function DatePlanningRedesign() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.8 }}
               transition={{ delay: 2, duration: 2 }}
-              className="mt-12 md:mt-0 md:absolute md:bottom-12 md:left-1/2 md:-translate-x-1/2 text-[9px] md:text-[10px] uppercase tracking-[0.5em] font-medium text-white/80 pb-8 md:pb-0 drop-shadow-sm"
+              className="mt-12 md:mt-0 md:absolute md:bottom-12 md:left-1/2 md:-translate-x-1/2 text-[9px] md:text-[10px] uppercase tracking-[0.5em] font-medium text-white/60 pb-8 md:pb-0"
             >
               The Rare Collection • Event OS
             </motion.div>
           </motion.section>
         )}
 
-        {/* 2️⃣ VIBE SELECTOR - Cinematic Editorial Redesign */}
+        {/* 2️⃣ VIBE SELECTOR - Desktop View (Optimal Editorial) */}
         {step === 1 && (
           <motion.section
-            key="vibe-editorial"
+            key="vibe-desktop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0, scale: 1.1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
             className="hidden md:flex min-h-screen bg-[#0a0a0a] text-white flex-row relative overflow-hidden"
           >
             {VIBES.map((v, i) => (
@@ -586,12 +600,12 @@ export default function DatePlanningRedesign() {
                 onClick={() => handleVibeSelect(v)}
                 className="group relative flex-1 min-h-screen flex flex-col justify-end items-center p-20 overflow-hidden cursor-pointer border-r border-white/5 last:border-0 transition-all duration-700 ease-[0.32,0.72,0,1] hover:flex-[1.5]"
               >
-                {/* Background Image with Zoom & Overlay */}
                 <motion.div
                   className="absolute inset-0 z-0"
-                  initial={{ scale: 1.1 }}
+                  initial={{ scale: 1.1, opacity: 0.5 }}
                   animate={{
                     scale: selectedVibe.id === v.id ? 1 : 1.1,
+                    opacity: selectedVibe.id === v.id ? 1 : 0.5
                   }}
                   transition={{ duration: 1.2 }}
                 >
@@ -604,7 +618,6 @@ export default function DatePlanningRedesign() {
                   <div className="absolute inset-0 bg-black/50 group-hover:bg-black/20 transition-all duration-700" />
                 </motion.div>
 
-                {/* Vertical Line Ornament */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-white/20 to-transparent" />
 
                 <div className="relative z-10 text-center space-y-8">
@@ -641,75 +654,100 @@ export default function DatePlanningRedesign() {
           </motion.section>
         )}
 
-        {/* 2.1️⃣ MOBILE VIBE SELECTOR - Snap-Scroll Experience */}
+        {/* 2.1️⃣ MOBILE VIBE SELECTOR - Immersive Reference-Matched Experience */}
         {step === 1 && (
           <motion.section
-            key="vibe-mobile"
+            key="vibe-mobile-immersive"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="md:hidden h-screen bg-black overflow-y-scroll snap-y snap-mandatory no-scrollbar"
           >
+            {/* Unified Mobile Navigation Pill is now handled globally for all steps */}
+
             {VIBES.map((v, i) => (
               <div
                 key={v.id}
-                className="h-screen w-full snap-start relative flex flex-col justify-end p-8"
+                className="h-screen w-full snap-start relative flex flex-col justify-center px-10 bg-black overflow-hidden"
                 onClick={() => handleVibeSelect(v)}
               >
+                {/* 1. Immersive Background Layer - Optimized visibility */}
                 <div className="absolute inset-0 z-0">
                   <Image
                     src={v.image}
                     alt={v.name}
                     fill
-                    className="object-cover brightness-[0.35]"
+                    className="object-cover brightness-[0.45] contrast-[1.1] scale-110"
+                    priority={i === 0}
                   />
-                  {/* Robust overlay for text legibility */}
-                  <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/90 z-[1]" />
-                  <div className={cn("absolute inset-0 opacity-40 mix-blend-overlay bg-gradient-to-b", v.gradient)} />
+                  <div className="absolute inset-0 bg-black/40" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black/60" />
                 </div>
 
-                <div className="relative z-10 mb-20 space-y-8 px-2">
-                  <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, ease: SOFT_EASE }}
-                  >
-                    <span className="text-[11px] font-black uppercase tracking-[0.4em] text-rose-500 mb-4 block drop-shadow-sm">
-                      {v.tagline}
-                    </span>
-                    <h2 className="text-6xl font-serif italic text-white leading-none mb-8 drop-shadow-lg">
-                      {v.name}
-                    </h2>
-                    <p className="text-white text-base font-light leading-relaxed max-w-[300px] drop-shadow-md">
-                      {v.description}
-                    </p>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    className="pt-6"
-                  >
-                    <div className="inline-flex items-center gap-6 text-white group bg-white/10 px-6 py-3 rounded-full backdrop-blur-md border border-white/20">
-                      <div className="w-12 h-12 rounded-full border border-white/40 flex items-center justify-center bg-white/10">
-                        <ArrowRight className="w-6 h-6" />
-                      </div>
-                      <span className="text-[11px] font-black uppercase tracking-[0.3em]">Explore Vibe</span>
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Progress Indicators for Mobile Snap */}
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col gap-3">
+                {/* 2. Side Progress Indicators */}
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col gap-5 z-20">
                   {VIBES.map((_, idx) => (
-                    <div
+                    <motion.div
                       key={idx}
-                      className={cn(
-                        "w-1.5 h-10 rounded-full transition-all duration-500 shadow-sm",
-                        idx === i ? "bg-rose-500 scale-y-125" : "bg-white/30"
-                      )}
+                      animate={{
+                        height: idx === i ? 40 : 20,
+                        width: 3,
+                        backgroundColor: idx === i ? "#f43f5e" : "rgba(255,255,255,0.15)",
+                        boxShadow: idx === i ? "0 0 10px rgba(244,63,94,0.3)" : "none"
+                      }}
+                      className="rounded-full transition-all duration-700"
                     />
                   ))}
+                </div>
+
+                {/* 3. Central Content Block - Structured for Visibility */}
+                <div className="relative z-10 pt-20 space-y-10">
+                  <div className="space-y-4">
+                    <motion.span
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-[10px] font-black uppercase tracking-[0.6em] text-rose-500 block"
+                    >
+                      {v.tagline}
+                    </motion.span>
+
+                    <motion.h2
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1, duration: 0.6 }}
+                      className="text-6xl font-serif italic text-white leading-none drop-shadow-2xl"
+                    >
+                      {v.name}
+                    </motion.h2>
+
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.3, duration: 0.6 }}
+                      className="relative pl-8 pt-2"
+                    >
+                      {/* Properly Scaled Accent Bar */}
+                      <div className="absolute left-0 top-2 bottom-0 w-[3px] bg-rose-500 rounded-full shadow-[0_0_15px_rgba(244,63,94,0.4)]" />
+                      <p className="text-white/80 text-[15px] font-light leading-relaxed max-w-[260px]">
+                        {v.description}
+                      </p>
+                    </motion.div>
+                  </div>
+
+                  {/* 4. Action Button - Clear and tappable */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5, duration: 0.6 }}
+                    className="pt-4"
+                  >
+                    <div className="inline-flex items-center gap-6 group">
+                      <div className="w-16 h-16 rounded-full border border-white/20 flex items-center justify-center bg-white/5 backdrop-blur-3xl shadow-xl active:scale-95 transition-transform">
+                        <ArrowRight className="w-7 h-7 text-white" />
+                      </div>
+                      <span className="text-[11px] font-black uppercase tracking-[0.4em] text-white">Select Vibe</span>
+                    </div>
+                  </motion.div>
                 </div>
               </div>
             ))}
@@ -723,10 +761,10 @@ export default function DatePlanningRedesign() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen bg-[#0a0a0a] text-white py-24 md:py-32 px-6 flex flex-col justify-center"
+            className="min-h-screen bg-[#0a0a0a] text-white pt-44 pb-20 md:py-32 px-6 flex flex-col justify-center"
           >
             <div className="max-w-7xl mx-auto w-full">
-              <div className="flex flex-col md:flex-row items-end justify-between mb-24 gap-12">
+              <div className="flex flex-col md:flex-row items-start md:items-end justify-between mb-16 md:mb-24 gap-10 md:gap-12">
                 <div className="space-y-6">
                   <motion.div
                     initial={{ opacity: 0, x: -20 }}
@@ -736,13 +774,13 @@ export default function DatePlanningRedesign() {
                     <div className="w-12 h-px bg-current" />
                     <span className="text-[10px] font-black uppercase tracking-[0.4em]">The Selection</span>
                   </motion.div>
-                  <h2 className="text-4xl sm:text-6xl md:text-[7rem] font-serif italic leading-[1.1] md:leading-[0.9] tracking-tighter">
-                    Crafting the <br /> <span className={selectedVibe.accent}>{selectedVibe.name}</span> Experience.
+                  <h2 className="text-4xl md:text-[7.5rem] font-serif italic leading-[1] md:leading-[0.9] tracking-tighter">
+                    Crafting the <br className="hidden md:block" /> <span className={selectedVibe.accent}>{selectedVibe.name}</span> Experience.
                   </h2>
                 </div>
-                <div className="max-w-sm text-right">
-                  <p className="text-white/40 text-sm uppercase tracking-widest leading-loose">
-                    Each plan is a masterclass in detail. <br /> Select a narrative that resonates.
+                <div className="max-w-sm text-left md:text-right">
+                  <p className="text-white/40 text-[10px] md:text-sm uppercase tracking-widest leading-loose">
+                    Each plan is a masterclass in detail. <br className="hidden md:block" /> Select a narrative that resonates.
                   </p>
                 </div>
               </div>
@@ -755,27 +793,27 @@ export default function DatePlanningRedesign() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.15 }}
                     onClick={() => handlePlanSelect(plan)}
-                    className="group relative bg-[#0a0a0a] p-16 text-left hover:bg-white transition-all duration-700 ease-[0.32,0.72,0,1]"
+                    className="group relative bg-[#0a0a0a] p-10 md:p-16 text-left hover:bg-white transition-all duration-700 ease-[0.32,0.72,0,1]"
                   >
-                    <div className="absolute top-12 right-12 text-white/10 group-hover:text-black/5 transition-colors">
-                      <span className="text-9xl font-serif italic font-black leading-none">{i + 1}</span>
+                    <div className="absolute top-8 right-8 md:top-12 md:right-12 text-white/10 group-hover:text-black/5 transition-colors">
+                      <span className="text-7xl md:text-9xl font-serif italic font-black leading-none">{i + 1}</span>
                     </div>
 
-                    <div className="relative z-10 space-y-12 h-full flex flex-col justify-between">
-                      <div className="w-16 h-16 rounded-full border border-white/10 flex items-center justify-center group-hover:border-black/10 group-hover:bg-black group-hover:text-white transition-all duration-700">
-                        <plan.icon size={28} strokeWidth={1} />
+                    <div className="relative z-10 space-y-8 md:space-y-12 h-full flex flex-col justify-between">
+                      <div className="w-12 h-12 md:w-16 md:h-16 rounded-full border border-white/10 flex items-center justify-center group-hover:border-black/10 group-hover:bg-black group-hover:text-white transition-all duration-700">
+                        <plan.icon size={24} className="md:w-7 md:h-7" strokeWidth={1} />
                       </div>
 
-                      <div className="space-y-4">
-                        <h3 className="text-3xl md:text-4xl font-serif italic text-white group-hover:text-black transition-colors duration-700">
+                      <div className="space-y-3 md:space-y-4">
+                        <h3 className="text-2xl md:text-4xl font-serif italic text-white group-hover:text-black transition-colors duration-700">
                           {plan.title}
                         </h3>
-                        <p className="text-white/40 group-hover:text-black/60 font-light text-sm leading-relaxed transition-colors duration-700">
+                        <p className="text-white/40 group-hover:text-black/60 font-light text-xs md:text-sm leading-relaxed transition-colors duration-700">
                           {plan.desc}
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700">
+                      <div className="flex items-center gap-4 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] text-rose-500 md:translate-y-4 md:opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-700">
                         Choose this path <ArrowRight size={14} />
                       </div>
                     </div>
@@ -804,7 +842,7 @@ export default function DatePlanningRedesign() {
             className="bg-[#0b0b0d] text-white min-h-screen"
           >
             {/* Immersive Scroll Header */}
-            <div className="h-screen w-full flex flex-col items-center justify-center text-center px-6 relative overflow-hidden">
+            <div className="h-[90vh] md:h-screen w-full flex flex-col items-center justify-center text-center px-6 pt-24 md:pt-0 relative overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, scale: 1.1 }}
                 animate={{ opacity: 0.3, scale: 1 }}
@@ -844,35 +882,35 @@ export default function DatePlanningRedesign() {
             </div>
 
             {/* Narrative Timeline */}
-            <div className="max-w-5xl mx-auto px-6 py-40 space-y-60 md:space-y-96">
+            <div className="max-w-5xl mx-auto px-6 py-24 md:py-40 space-y-32 md:space-y-96">
               {selectedVibe.narrative.map((item, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 100 }}
+                  initial={{ opacity: 0, y: 60 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ margin: "-20%" }}
-                  transition={{ duration: 1.5, ease: SOFT_EASE }}
+                  viewport={{ margin: "-10%" }}
+                  transition={{ duration: 1, ease: SOFT_EASE }}
                   className={cn(
                     "flex flex-col md:flex-row items-center gap-12 md:gap-32",
-                    i % 2 === 1 ? "md:flex-row-reverse text-right" : ""
+                    i % 2 === 1 ? "md:flex-row-reverse text-center md:text-right" : "text-center md:text-left"
                   )}
                 >
-                  <div className="flex-1 space-y-8">
+                  <div className="flex-1 space-y-6 md:space-y-8">
                     <motion.div
                       initial={{ opacity: 0, x: i % 2 === 0 ? -20 : 20 }}
                       whileInView={{ opacity: 0.5, x: 0 }}
-                      className="text-[12px] font-bold tracking-[0.6em] uppercase"
+                      className="text-[10px] md:text-[12px] font-bold tracking-[0.4em] md:tracking-[0.6em] uppercase"
                     >
                       {item.time}
                     </motion.div>
-                    <h3 className="text-4xl md:text-7xl font-serif font-light italic leading-tight group-hover:drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all">
+                    <h3 className="text-3xl md:text-7xl font-serif font-light italic leading-tight transition-all">
                       {item.action}
                     </h3>
-                    <div className={cn("w-20 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent", i % 2 === 1 ? "ml-auto" : "mr-auto")} />
+                    <div className={cn("w-16 md:w-20 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent", (i % 2 === 1 || true) ? "mx-auto md:ml-auto md:mr-0" : "mx-auto md:mr-auto md:ml-0")} />
                   </div>
                   <motion.div
                     whileHover={{ scale: 1.05, rotate: i % 2 === 0 ? 2 : -2 }}
-                    className="flex-1 relative aspect-[4/5] w-full max-w-sm rounded-[4rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.8)] border border-white/10"
+                    className="flex-1 relative aspect-[4/5] w-full max-w-[280px] md:max-w-sm rounded-3xl md:rounded-[4rem] overflow-hidden shadow-[0_30px_60px_rgba(0,0,0,0.5)] md:shadow-[0_50px_100px_rgba(0,0,0,0.8)] border border-white/10"
                   >
                     <Image
                       src={item.image}
@@ -887,28 +925,28 @@ export default function DatePlanningRedesign() {
             </div>
 
             {/* Shareability Card: The Digital Invite */}
-            <section className="py-40 bg-white text-slate-900 rounded-t-[5rem] relative overflow-hidden">
+            <section className="py-24 md:py-40 bg-white text-slate-900 rounded-t-[3rem] md:rounded-t-[5rem] relative overflow-hidden">
               <div className="absolute inset-0 bg-slate-50 opacity-50" />
               <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  className="bg-white/80 backdrop-blur-3xl p-12 md:p-24 rounded-[4rem] border border-slate-200 shadow-[0_40px_100px_rgba(0,0,0,0.08)] relative overflow-hidden"
+                  className="bg-white/80 backdrop-blur-3xl p-8 md:p-24 rounded-[3rem] md:rounded-[4rem] border border-slate-200 shadow-[0_30px_60px_rgba(0,0,0,0.05)] md:shadow-[0_40px_100px_rgba(0,0,0,0.08)] relative overflow-hidden"
                 >
                   {/* Ornamental Background Glow */}
                   <div className={cn("absolute -top-40 -right-40 w-80 h-80 rounded-full blur-[100px] opacity-10 bg-gradient-to-br", selectedVibe.gradient)} />
 
-                  <div className="mb-14">
+                  <div className="mb-8 md:mb-14">
                     <motion.span
-                      className="inline-block px-5 py-2 rounded-full bg-slate-100 text-[10px] font-black uppercase tracking-[0.4em] mb-10 text-slate-400"
+                      className="inline-block px-4 py-1.5 md:px-5 md:py-2 rounded-full bg-slate-100 text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] mb-6 md:mb-10 text-slate-400"
                     >
                       Exclusive Invitation
                     </motion.span>
-                    <h3 className="text-5xl md:text-8xl font-serif italic mb-6 leading-tight">
+                    <h3 className="text-4xl md:text-8xl font-serif italic mb-4 md:mb-6 leading-tight">
                       {selectedPlan?.title || "The Escape"}
                     </h3>
-                    <p className="text-slate-500 font-light text-xl md:text-2xl mt-8">
+                    <p className="text-slate-500 font-light text-base md:text-2xl mt-4 md:mt-8">
                       A curated {selectedVibe.name.toLowerCase()} journey in the heart of {city}.
                     </p>
                   </div>
