@@ -935,17 +935,6 @@ export default function AvantGardeLanding() {
                 </div>
             </footer>
 
-            <style jsx global>{`
-                @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital,wght@0,400;1,400&family=Montserrat:wght@900&family=Inter:wght@300;400;700;900&family=Space+Mono:wght@400;700&display=swap');
-                :root { 
-                    --font-serif: 'Instrument Serif', serif; 
-                    --font-mono: 'Space Mono', monospace; 
-                    --font-sans: 'Inter', sans-serif;
-                }
-                h1, h2, h3, h4, .font-serif { font-family: var(--font-serif); }
-                .font-mono { font-family: var(--font-mono); }
-                body { font-family: var(--font-sans); }
-            `}</style>
         </main>
     );
 }
