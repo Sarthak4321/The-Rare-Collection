@@ -1,35 +1,54 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import {
   Heart,
   Sparkles,
   Moon,
-  Sun,
   Zap,
   MapPin,
-  Calendar,
   ArrowRight,
   ChevronRight,
   Music,
   Camera,
   Coffee,
-  Wine,
   Star,
   Share2,
-  Check,
   Flower2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import FloatingAura from "@/components/FloatingAura";
 
-// --- DESIGN SYSTEM & CONSTANTS ---
+interface Plan {
+  id: string;
+  title: string;
+  desc: string;
+  icon: React.ElementType;
+}
 
-const VIBES = [
+interface Vibe {
+  id: string;
+  name: string;
+  headline: string;
+  tagline: string;
+  subcopy: string;
+  description: string;
+  theme: string;
+  accent: string;
+  vibeColor: string;
+  gradient: string;
+  video: string;
+  image: string;
+  tags: string[];
+  plans: Plan[];
+  narrative: { time: string; action: string; image: string }[];
+}
+
+const VIBES: Vibe[] = [
   {
     id: "romantic",
     name: "Romantic",
@@ -141,39 +160,22 @@ const SOFT_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
 // --- COMPONENTS ---
 
 const FloatingParticles = ({ vibeColor }: { vibeColor: string }) => {
-  const [elements, setElements] = useState<{
-    id: number;
-    type: 'particle' | 'sphere' | 'ring';
-    x: number;
-    y: number;
-    z: number;
-    size: number;
-    duration: number;
-    delay: number;
-    rotateX: number;
-    rotateY: number;
-    driftX: number;
-    driftY: number;
-  }[]>([]);
-
-  useEffect(() => {
-    // Increase count for mobile vibrance
-    const newElements = [...Array(40)].map((_, i) => ({
+  const [elements] = React.useState(() => {
+    return [...Array(40)].map((_, i) => ({
       id: i,
       type: i % 12 === 0 ? 'sphere' as const : (i % 9 === 0 ? 'ring' as const : 'particle' as const),
       x: Math.random() * 100,
       y: Math.random() * 100,
       z: Math.random() * 600 - 300,
-      size: i % 12 === 0 ? Math.random() * 150 + 100 : (i % 9 === 0 ? Math.random() * 100 + 50 : Math.random() * 6 + 4), // Increased size
+      size: i % 12 === 0 ? Math.random() * 150 + 100 : (i % 9 === 0 ? Math.random() * 100 + 50 : Math.random() * 6 + 4),
       duration: Math.random() * 20 + 15,
       delay: Math.random() * -20,
       rotateX: Math.random() * 360,
       rotateY: Math.random() * 360,
-      driftX: Math.random() * 60 - 30, // Increased drift
+      driftX: Math.random() * 60 - 30,
       driftY: Math.random() * 60 - 30,
     }));
-    setElements(newElements);
-  }, []);
+  });
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none sticky" style={{ perspective: '1200px' }}>
@@ -232,128 +234,11 @@ const GrainOverlay = () => (
   </div>
 );
 
-const VibeCard = ({ v, onSelect }: { v: typeof VIBES[0], onSelect: () => void }) => {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
-
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["10deg", "-10deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-10deg", "10deg"]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  return (
-    <motion.div
-      variants={{
-        hidden: { opacity: 0, y: 50 },
-        visible: { opacity: 1, y: 0 }
-      }}
-      transition={{ duration: 0.8, ease: SOFT_EASE }}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        rotateX,
-        rotateY,
-        transformStyle: "preserve-3d",
-      } as any}
-      className="relative group aspect-[4/5] md:aspect-[16/10] rounded-[3rem] overflow-hidden text-left shadow-2xl border border-slate-200 cursor-pointer"
-      onClick={onSelect}
-    >
-      <div
-        style={{
-          transform: "translateZ(50px)",
-          transformStyle: "preserve-3d",
-        }}
-        className="absolute inset-0"
-      >
-        <Image
-          src={v.image}
-          alt={v.name}
-          fill
-          className="object-cover transition-transform duration-1000 group-hover:scale-110"
-        />
-      </div>
-
-      {/* Overlay Gradient */}
-      <div className={cn(
-        "absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-700"
-      )} />
-
-      {/* Content Wrapper */}
-      <div
-        style={{
-          transform: "translateZ(75px)",
-        }}
-        className="absolute inset-0 p-8 md:p-12 z-10 flex flex-col justify-end"
-      >
-        <div className="space-y-4 mb-8">
-          <motion.span
-            className={cn("text-[8px] md:text-[10px] font-black uppercase tracking-[0.4em] drop-shadow-md px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 inline-block", "text-white")}
-          >
-            {v.tagline}
-          </motion.span>
-          <h3 className="text-4xl md:text-7xl font-serif text-white italic leading-[0.8]">{v.name}</h3>
-        </div>
-
-        {/* Hover Reveal Items */}
-        <div className="overflow-hidden">
-          <div className="translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-[0.32,0.72,0,1]">
-            <p className="text-white/70 text-base md:text-xl font-light leading-relaxed max-w-xl mb-8">
-              {v.description}
-            </p>
-            <div className="flex flex-wrap gap-2 md:gap-3">
-              {v.tags.map((tag) => (
-                <span key={tag} className="px-3 py-1 md:px-4 md:py-2 rounded-full bg-white/5 text-[8px] md:text-[10px] font-bold text-white uppercase tracking-widest border border-white/10 backdrop-blur-md">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Arrow / CTA */}
-        <div className="absolute top-8 right-8 md:top-12 md:right-12">
-          <motion.div
-            whileHover={{ scale: 1.1 }}
-            className={cn(
-              "w-12 h-12 md:w-16 md:h-16 rounded-full backdrop-blur-3xl border border-white/20 flex items-center justify-center text-white transition-all duration-700",
-              "bg-white/5 group-hover:bg-white group-hover:text-slate-900 shadow-2xl"
-            )}
-          >
-            <ArrowRight className="w-6 h-6 md:w-7 md:h-7" />
-          </motion.div>
-        </div>
-      </div>
-
-      {/* Edge Highlight */}
-      <div className="absolute inset-0 border border-white/20 rounded-[3rem] pointer-events-none group-hover:border-white/40 transition-colors" />
-    </motion.div>
-  );
-};
-
 export default function DatePlanningRedesign() {
-  const [selectedVibe, setSelectedVibe] = useState(VIBES[0]);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [selectedVibe, setSelectedVibe] = useState<Vibe>(VIBES[0]);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [step, setStep] = useState(0); // 0: Hero, 1: Vibe, 2: Plan Selection, 3: Reveal
-  const [city, setCity] = useState("Mumbai");
-  const [isSharing, setIsSharing] = useState(false);
+  const [city] = useState("Mumbai");
 
   const { scrollYProgress } = useScroll();
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.1]);
@@ -367,7 +252,7 @@ export default function DatePlanningRedesign() {
     }
   };
 
-  const handlePlanSelect = (plan: any) => {
+  const handlePlanSelect = (plan: Plan) => {
     setSelectedPlan(plan);
     setStep(3);
     if (typeof window !== "undefined") {
@@ -594,7 +479,7 @@ export default function DatePlanningRedesign() {
               transition={{ duration: 0.8 }}
               className="hidden md:flex min-h-screen bg-[#0a0a0a] text-white flex-row relative overflow-hidden"
             >
-              {VIBES.map((v, i) => (
+              {VIBES.map((v) => (
                 <motion.div
                   key={v.id}
                   onMouseEnter={() => setSelectedVibe(v)}
@@ -787,7 +672,7 @@ export default function DatePlanningRedesign() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-white/10 border border-white/10 rounded-3xl overflow-hidden">
-                  {selectedVibe.plans.map((plan: any, i: number) => (
+                  {selectedVibe.plans.map((plan: Plan, i: number) => (
                     <motion.button
                       key={plan.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -955,7 +840,6 @@ export default function DatePlanningRedesign() {
                     <div className="flex flex-col sm:flex-row gap-6 justify-center mt-16">
                       <button
                         onClick={() => {
-                          setIsSharing(true);
                           if (typeof navigator !== "undefined") {
                             navigator.clipboard.writeText(`Hey, I planned this for us: ${selectedPlan?.title}. Cant wait!`);
                           }

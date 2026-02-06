@@ -1,16 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import {
-    Sparkles,
     ArrowRight,
-    ChevronRight,
     Zap,
-    Moon,
-    Infinity as InfinityIcon,
     Camera,
     Compass,
     Eye,
@@ -18,11 +14,9 @@ import {
     Twitter,
     Linkedin,
     Menu,
-    X,
-    MessageCircle
+    X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import FloatingAura from "@/components/FloatingAura";
 
 /* -------------------------------------------------------------------------- */
 /* DESIGN CONSTANTS                                                           */
