@@ -511,7 +511,21 @@ export default function DatePlanningRedesign() {
                     filter: `drop-shadow(0 0 25px ${selectedVibe.vibeColor}66)`
                   }}
                 >
-                  Now what?
+                  Now what
+                  <motion.span
+                    animate={{
+                      y: [0, -8, 0],
+                      rotate: [0, 10, 0]
+                    }}
+                    transition={{
+                      duration: 3,
+                      repeat: Infinity,
+                      ease: "easeInOut"
+                    }}
+                    className="inline-block origin-bottom ml-2"
+                  >
+                    ?
+                  </motion.span>
                 </motion.span>
               </motion.h1>
 
