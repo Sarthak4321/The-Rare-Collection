@@ -18,6 +18,7 @@ import {
     X
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Logo from "../components/Logo";
 
 /* -------------------------------------------------------------------------- */
 /* DESIGN CONSTANTS                                                           */
@@ -210,13 +211,14 @@ export default function AvantGardeLanding() {
                 isMenuOpen ? "z-[200]" : "z-[100]"
             )}>
                 <div className="bg-black/60 backdrop-blur-2xl border border-white/10 px-4 md:px-8 py-3 md:py-4 flex items-center justify-between rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                    <Link href="/" className="text-lg md:text-xl font-serif italic tracking-tighter group flex items-center gap-2 md:gap-3">
-                        <div className="relative">
-                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-rose-500 rounded-full animate-pulse" />
-                            <div className="absolute inset-0 bg-rose-500 rounded-full animate-ping opacity-20" />
+                    <Link href="/" className="flex items-center gap-3 md:gap-4 group">
+                        <div className="relative transform transition-transform group-hover:scale-110 group-hover:rotate-6">
+                            <Logo className="w-9 h-9 md:w-11 md:h-11 drop-shadow-[0_0_12px_rgba(244,63,94,0.3)]" />
                         </div>
-                        <span className="text-white">EVNTMET</span>
-                        <span className="text-rose-500 group-hover:translate-x-1 inline-block transition-transform">.</span>
+                        <div className="flex flex-col leading-tight">
+                            <span className="text-sm md:text-base font-black uppercase tracking-[0.2em] text-white">The Rare</span>
+                            <span className="text-[8px] md:text-[10px] uppercase tracking-[0.4em] text-rose-500 font-bold">Collection</span>
+                        </div>
                     </Link>
 
                     {/* Desktop Links */}
@@ -235,14 +237,14 @@ export default function AvantGardeLanding() {
 
                     <div className="flex items-center gap-3 md:gap-8">
                         <Link
-                            href="/login"
+                            href="/auth/login"
                             className="hidden md:block text-[10px] font-black uppercase tracking-[0.4em] text-white/40 hover:text-white transition-all relative group"
                         >
                             Login
                             <span className="absolute -bottom-1 left-0 w-0 h-px bg-rose-500 transition-all group-hover:w-full" />
                         </Link>
                         <Link
-                            href="/signup"
+                            href="/auth/signup"
                             className="bg-white text-black px-4 py-2 md:px-6 md:py-2.5 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-xl font-bold text-[9px] md:text-[10px] uppercase tracking-wider"
                         >
                             Signup
