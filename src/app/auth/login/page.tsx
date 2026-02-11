@@ -3,12 +3,14 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import Logo from "../../../components/Logo";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,124 +19,175 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#F8FAFC] p-6 selection:bg-rose-100 selection:text-rose-900">
-            {/* Background Decorations */}
-            <div className="fixed inset-0 pointer-events-none overflow-hidden">
-                <div className="absolute top-[-5%] left-[-5%] w-[40%] h-[40%] bg-blue-100/10 blur-[120px] rounded-full" />
-                <div className="absolute bottom-[-5%] right-[-5%] w-[40%] h-[40%] bg-rose-100/10 blur-[120px] rounded-full" />
-            </div>
-
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                className="relative z-10 w-full max-w-[400px]"
-            >
-                <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-[0_32px_80px_-20px_rgba(0,0,0,0.08)] border border-slate-100">
-                    {/* Header */}
-                    <div className="text-center mb-10">
-                        <motion.div
-                            whileHover={{ rotate: 5, scale: 1.05 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                            className="inline-block mb-6"
-                        >
-                            <Logo className="w-48 h-12" />
-                        </motion.div>
-                        <h1 className="text-2xl md:text-3xl font-extrabold text-[#111827] mb-2 tracking-tight leading-tight">Welcome back</h1>
-                        <p className="text-slate-500 font-medium text-sm mt-2">Continue your journey with The Rare Collection.</p>
-                    </div>
-
-                    {/* Google Auth - Premium Look */}
-                    <button className="w-full flex items-center justify-center gap-3 py-4 px-4 border border-slate-200 rounded-2xl hover:bg-slate-50 transition-all font-bold text-slate-700 text-[15px] group bg-white shadow-sm hover:shadow-md mb-8">
-                        <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">
-                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335" />
-                        </svg>
-                        Sign in with Google
-                    </button>
-
-                    {/* Divider */}
-                    <div className="relative mb-8 text-center">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-slate-100"></div>
-                        </div>
-                        <span className="relative bg-white px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Or Access with Email</span>
-                    </div>
-
-                    {/* Form - Compact & Pro */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Email Address */}
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-600 ml-1">Email Address</label>
-                            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 h-[52px] group focus-within:bg-white focus-within:border-rose-500 focus-within:ring-4 focus-within:ring-rose-500/5 transition-all outline-none">
-                                <Mail className="text-slate-400 group-focus-within:text-rose-500 transition-colors" size={18} />
-                                <input
-                                    type="email"
-                                    required
-                                    placeholder="name@company.com"
-                                    className="w-full bg-transparent focus:outline-none text-slate-900 font-medium text-[14px] border-none ring-0 placeholder:text-slate-300"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Password */}
-                        <div className="space-y-1.5">
-                            <div className="flex justify-between items-center px-1">
-                                <label className="text-xs font-bold text-slate-600">Password</label>
-                                <Link href="#" className="text-xs font-bold text-rose-600 hover:text-rose-700 transition-colors">Forgot?</Link>
-                            </div>
-                            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 h-[52px] group focus-within:bg-white focus-within:border-rose-500 focus-within:ring-4 focus-within:ring-rose-500/5 transition-all outline-none relative">
-                                <Lock className="text-slate-400 group-focus-within:text-rose-500 transition-colors" size={18} />
-                                <input
-                                    type={showPassword ? "text" : "password"}
-                                    required
-                                    placeholder="••••••••"
-                                    className="w-full bg-transparent focus:outline-none text-slate-900 font-medium text-[14px] border-none ring-0 placeholder:text-slate-300"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="text-slate-400 hover:text-slate-600 transition-colors shrink-0 outline-none"
-                                >
-                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 px-1">
-                            <input type="checkbox" id="remember" className="w-4 h-4 rounded border-slate-300 text-rose-500 focus:ring-rose-500 transition-all cursor-pointer" />
-                            <label htmlFor="remember" className="text-sm text-slate-500 font-bold cursor-pointer select-none">Keep me signed in</label>
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-slate-900 hover:bg-black text-white font-extrabold py-4 rounded-xl transition-all shadow-xl shadow-slate-200 active:scale-[0.98] disabled:opacity-70 flex items-center justify-center gap-2 text-base mt-2"
-                        >
-                            {isLoading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    Sign In
-                                    <ArrowRight size={20} />
-                                </>
-                            )}
-                        </button>
-                    </form>
-
-                    <p className="text-center mt-10 text-[14px] font-bold text-slate-400">
-                        Need an account? <Link href="/auth/signup" className="text-rose-600 hover:text-rose-700 transition-colors">Register now</Link>
-                    </p>
+        <div className="min-h-screen w-full flex bg-[#FAFAFA]">
+            {/* Left Column - Brand & Visual */}
+            <div className="hidden lg:flex w-1/2 relative bg-[#0A0A0A] overflow-hidden flex-col justify-between p-12 text-white">
+                {/* Abstract Background patterns */}
+                <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-rose-500/20 blur-[120px] rounded-full" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-blue-600/20 blur-[120px] rounded-full" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[length:24px_24px]" />
                 </div>
 
-                {/* Footer Copy */}
-                <p className="mt-8 text-center text-[10px] text-slate-400 font-bold uppercase tracking-[0.4em]">
-                    The Rare Collection &copy; 2026
-                </p>
-            </motion.div>
+                <div className="relative z-10">
+                    <Logo className="w-40 h-auto invert brightness-200" />
+                </div>
+
+                <div className="relative z-10 max-w-lg">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2, duration: 0.8 }}
+                    >
+                        <div className="flex items-center gap-2 mb-6 px-3 py-1 w-fit rounded-full bg-white/10 backdrop-blur-sm border border-white/10">
+                            <Sparkles className="w-3 h-3 text-rose-300" />
+                            <span className="text-xs font-medium text-rose-100 uppercase tracking-wider">The Rare Collection</span>
+                        </div>
+                        <h2 className="text-5xl font-serif font-light leading-tight mb-6">
+                            Experience the extraordinary in every digital artifact.
+                        </h2>
+                        <p className="text-lg text-white/60 font-medium leading-relaxed">
+                            "The Rare Collection has transformed how I perceive digital ownership. The attention to detail and curation is simply unmatched in the industry."
+                        </p>
+
+
+                    </motion.div>
+                </div>
+
+                <div className="relative z-10 text-xs text-white/30 flex justify-between">
+                    <p>© 2026 The Rare Collection</p>
+                    <div className="flex gap-4">
+                        <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
+                        <Link href="#" className="hover:text-white transition-colors">Terms</Link>
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Column - Login Form */}
+            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-24 bg-white relative">
+                {/* Mobile pattern */}
+                <div className="absolute inset-0 lg:hidden pointer-events-none">
+                    <div className="absolute top-0 right-0 w-[50%] h-[40%] bg-slate-50 blur-[80px] rounded-full opacity-50" />
+                </div>
+
+                <div className="w-full max-w-[440px] relative z-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <div className="flex lg:hidden mb-8 justify-center">
+                            <Logo className="w-40" />
+                        </div>
+
+                        <div className="mb-10 text-center lg:text-left">
+                            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 pb-2">Welcome Back</h1>
+                            <p className="text-slate-500 mt-2 text-sm">Please enter your details to access your dashboard.</p>
+                        </div>
+
+                        {/* Social Login */}
+                        <button className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all focus:ring-4 focus:ring-slate-100 outline-none">
+                            <svg className="w-5 h-5" viewBox="0 0 24 24">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335" />
+                            </svg>
+                            <span className="font-sans">Sign in with Google</span>
+                        </button>
+
+                        <div className="relative my-8">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-200"></div>
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-white px-4 text-slate-400 font-medium tracking-wider">Or continue with</span>
+                            </div>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700" htmlFor="email">Email Address</label>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
+                                        <Mail size={18} />
+                                    </div>
+                                    <input
+                                        id="email"
+                                        type="email"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        required
+                                        className="w-full h-[52px] pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
+                                        placeholder="name@company.com"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700" htmlFor="password">Password</label>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
+                                        <Lock size={18} />
+                                    </div>
+                                    <input
+                                        id="password"
+                                        type={showPassword ? "text" : "password"}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        className="w-full h-[52px] pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors outline-none"
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between pt-1">
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="remember"
+                                        className="w-4 h-4 rounded border-slate-300 text-slate-900 focus:ring-slate-900"
+                                    />
+                                    <label htmlFor="remember" className="text-sm text-slate-600 font-medium cursor-pointer">Remember me</label>
+                                </div>
+                                <Link href="#" className="text-sm font-semibold text-slate-900 hover:text-rose-600 transition-colors">
+                                    Forgot password?
+                                </Link>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={isLoading}
+                                className="w-full h-[52px] bg-slate-900 text-white font-semibold rounded-xl hover:bg-black transition-all transform active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20"
+                            >
+                                {isLoading ? (
+                                    <Loader2 className="animate-spin" size={20} />
+                                ) : (
+                                    <>
+                                        Sign In
+                                        <ArrowRight size={18} />
+                                    </>
+                                )}
+                            </button>
+                        </form>
+
+                        <div className="mt-8 text-center text-sm">
+                            <span className="text-slate-500">Don't have an account? </span>
+                            <Link href="/auth/signup" className="font-bold text-slate-900 hover:text-rose-600 transition-colors underline decoration-slate-200 underline-offset-4 hover:decoration-rose-600">
+                                Create an account
+                            </Link>
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
         </div>
     );
 }
