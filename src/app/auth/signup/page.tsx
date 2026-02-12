@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles, User, Phone } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles, User, Phone, ChevronDown } from "lucide-react";
 import Logo from "../../../components/Logo";
 
 export default function SignupPage() {
@@ -12,6 +12,7 @@ export default function SignupPage() {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
+    const [gender, setGender] = useState("");
     const [password, setPassword] = useState("");
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -163,6 +164,30 @@ export default function SignupPage() {
                             </div>
 
                             <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-700" htmlFor="gender">Gender</label>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors pointer-events-none">
+                                        <User size={18} />
+                                    </div>
+                                    <select
+                                        id="gender"
+                                        value={gender}
+                                        onChange={(e) => setGender(e.target.value)}
+                                        required
+                                        className="w-full h-[52px] pl-11 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium appearance-none"
+                                    >
+                                        <option value="" disabled>Select your gender</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="not_preferred">Not preferred</option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                        <ChevronDown size={16} />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700" htmlFor="password">Password</label>
                                 <div className="relative group">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
@@ -190,7 +215,7 @@ export default function SignupPage() {
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full h-[52px] bg-slate-900 text-white font-semibold rounded-xl hover:bg-black transition-all transform active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-slate-900/20 mt-2"
+                                className="w-full h-[52px] bg-rose-600 text-white font-semibold rounded-xl hover:bg-rose-700 transition-all transform active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-rose-600/20 mt-2"
                             >
                                 {isLoading ? (
                                     <Loader2 className="animate-spin" size={20} />
