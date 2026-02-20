@@ -3,22 +3,65 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles, User, Phone, ChevronDown } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles, User, Phone, ChevronDown, Store, UserCircle, MapPin } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import Logo from "../../../components/Logo";
+import { supabase } from "@/lib/supabase";
 
 export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [name, setName] = useState("");
+    const [shopName, setShopName] = useState("");
     const [email, setEmail] = useState("");
     const [phone, setPhone] = useState("");
     const [gender, setGender] = useState("");
     const [password, setPassword] = useState("");
+    const [role, setRole] = useState<"user" | "vendor">("user");
+    const [vendorCategory, setVendorCategory] = useState<string>("");
+    const [location, setLocation] = useState<"kolkata" | "durgapur">("kolkata");
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setTimeout(() => setIsLoading(false), 2000);
+
+        try {
+            // Actual Supabase Integration
+            const { error } = await supabase
+                .from(role === 'vendor' ? 'vendors' : 'users')
+                .insert([
+                    role === 'vendor' ? {
+                        shop_name: shopName,
+                        owner_name: name,
+                        email,
+                        phone,
+                        category: vendorCategory,
+                        location,
+                        password, // Adding password for completeness, though auth should handle this normally
+                    } : {
+                        full_name: name,
+                        email,
+                        phone,
+                        gender,
+                        password,
+                    }
+                ]);
+
+            if (error) throw error;
+
+            if (role === "vendor") {
+                router.push(`/dashboard/vendor?email=${email}`);
+            } else {
+                router.push(`/dashboard/user?email=${email}`);
+            }
+        } catch (err: any) {
+            console.error("Signup error:", err);
+            alert(`Signup failed: ${err.message || "Please check your Supabase connection and schema."}`);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -108,12 +151,89 @@ export default function SignupPage() {
                             </div>
                         </div>
 
+                        <div className="flex gap-4 mb-8">
+                            <button
+                                type="button"
+                                onClick={() => setRole("user")}
+                                className={cn(
+                                    "flex-1 py-4 px-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                                    role === "user" ? "border-rose-500 bg-rose-50 text-rose-600" : "border-slate-100 bg-slate-50 text-slate-400 grayscale hover:grayscale-0"
+                                )}
+                            >
+                                <UserCircle size={24} />
+                                <span className="text-xs font-black uppercase tracking-widest">User</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setRole("vendor")}
+                                className={cn(
+                                    "flex-1 py-4 px-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2",
+                                    role === "vendor" ? "border-rose-500 bg-rose-50 text-rose-600" : "border-slate-100 bg-slate-50 text-slate-400 grayscale hover:grayscale-0"
+                                )}
+                            >
+                                <Store size={24} />
+                                <span className="text-xs font-black uppercase tracking-widest">Vendor</span>
+                            </button>
+                        </div>
+
                         <form onSubmit={handleSubmit} className="space-y-5">
+                            {role === "vendor" && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    className="space-y-2 pb-4"
+                                >
+                                    <label className="text-sm font-semibold text-slate-700" htmlFor="vendorCategory">Vendor Category</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors pointer-events-none">
+                                            <Sparkles size={18} />
+                                        </div>
+                                        <select
+                                            id="vendorCategory"
+                                            value={vendorCategory}
+                                            onChange={(e) => setVendorCategory(e.target.value)}
+                                            required
+                                            className="w-full h-[52px] pl-11 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium appearance-none"
+                                        >
+                                            <option value="">Select Category</option>
+                                            <option value="hospitality">Cafe, Private Theater & Hotel Owner</option>
+                                            <option value="workshops">DIY Candle Workshop, Pottery Workshop & Painting Cafe</option>
+                                            <option value="tour">Tour Companies</option>
+                                            <option value="decorators">Decorators</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                            <ChevronDown size={16} />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                            {role === "vendor" && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700" htmlFor="shopName">Business / Shop Name</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
+                                            <Store size={18} />
+                                        </div>
+                                        <input
+                                            id="shopName"
+                                            type="text"
+                                            value={shopName}
+                                            onChange={(e) => setShopName(e.target.value)}
+                                            required
+                                            className="w-full h-[52px] pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
+                                            placeholder="The Blue Tokai Portal"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700" htmlFor="name">Full Name</label>
+                                <label className="text-sm font-semibold text-slate-700" htmlFor="name">
+                                    {role === "user" ? "Full Name" : "Owner Name"}
+                                </label>
                                 <div className="relative group">
                                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
-                                        <User size={18} />
+                                        <UserCircle size={18} />
                                     </div>
                                     <input
                                         id="name"
@@ -122,7 +242,7 @@ export default function SignupPage() {
                                         onChange={(e) => setName(e.target.value)}
                                         required
                                         className="w-full h-[52px] pl-11 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
-                                        placeholder="Arp Sharma"
+                                        placeholder={role === "user" ? "Arp Sharma" : "John Doe"}
                                     />
                                 </div>
                             </div>
@@ -163,29 +283,53 @@ export default function SignupPage() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700" htmlFor="gender">Gender</label>
-                                <div className="relative group">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors pointer-events-none">
-                                        <User size={18} />
-                                    </div>
-                                    <select
-                                        id="gender"
-                                        value={gender}
-                                        onChange={(e) => setGender(e.target.value)}
-                                        required
-                                        className="w-full h-[52px] pl-11 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium appearance-none"
-                                    >
-                                        <option value="" disabled>Select your gender</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="not_preferred">Not preferred</option>
-                                    </select>
-                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-                                        <ChevronDown size={16} />
+                            {role === "user" ? (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700" htmlFor="gender">Gender</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors pointer-events-none">
+                                            <User size={18} />
+                                        </div>
+                                        <select
+                                            id="gender"
+                                            value={gender}
+                                            onChange={(e) => setGender(e.target.value)}
+                                            required
+                                            className="w-full h-[52px] pl-11 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium appearance-none"
+                                        >
+                                            <option value="" disabled>Select your gender</option>
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                            <option value="not_preferred">Not preferred</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                            <ChevronDown size={16} />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700" htmlFor="location">Location</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors pointer-events-none">
+                                            <MapPin size={18} />
+                                        </div>
+                                        <select
+                                            id="location"
+                                            value={location}
+                                            onChange={(e) => setLocation(e.target.value as any)}
+                                            required
+                                            className="w-full h-[52px] pl-11 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium appearance-none"
+                                        >
+                                            <option value="kolkata">Kolkata</option>
+                                            <option value="durgapur">Durgapur</option>
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+                                            <ChevronDown size={16} />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-700" htmlFor="password">Password</label>

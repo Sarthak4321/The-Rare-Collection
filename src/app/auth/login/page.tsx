@@ -5,17 +5,65 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import Logo from "../../../components/Logo";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setTimeout(() => setIsLoading(false), 2000);
+
+        try {
+            // 1. Try to find in Vendors
+            const { data: vendor, error: vError } = await supabase
+                .from('vendors')
+                .select('*')
+                .eq('email', email)
+                .single();
+
+            if (vendor) {
+                if (vendor.password === password) {
+                    router.push(`/dashboard/vendor?email=${email}`);
+                    return;
+                } else {
+                    alert("Incorrect password");
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            // 2. Try to find in Users
+            const { data: user, error: uError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .single();
+
+            if (user) {
+                if (user.password === password) {
+                    router.push(`/dashboard/user?email=${email}`);
+                    return;
+                } else {
+                    alert("Incorrect password");
+                    setIsLoading(false);
+                    return;
+                }
+            }
+
+            alert("Account not found. Please sign up.");
+
+        } catch (err: any) {
+            console.error("Login error:", err);
+            alert("Login failed. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

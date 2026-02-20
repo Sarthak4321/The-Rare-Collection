@@ -11,6 +11,8 @@ import {
     Camera,
     Compass,
     Eye,
+    MapPin,
+    Sparkles,
     Instagram,
     Twitter,
     Linkedin,
@@ -405,21 +407,21 @@ export default function AvantGardeLanding() {
                 >
                     <motion.h2
                         animate={{
-                            opacity: [0.03, 0.08, 0.03, 0.1, 0.03, 0.03],
+                            opacity: [0.02, 0.3, 0.05, 0.4, 0.05, 0.02],
                             textShadow: [
-                                "0 0 10px rgba(255,255,255,0.1)",
-                                "0 0 30px rgba(255,255,255,0.2)",
-                                "0 0 10px rgba(255,255,255,0.1)",
-                                "0 0 40px rgba(255,255,255,0.25)",
-                                "0 0 10px rgba(255,255,255,0.1)",
-                                "0 0 10px rgba(255,255,255,0.1)"
+                                "0 0 20px rgba(244,63,94,0.1)",
+                                "0 0 60px rgba(244,63,94,0.5)",
+                                "0 0 20px rgba(244,63,94,0.1)",
+                                "0 0 100px rgba(244,63,94,0.7)",
+                                "0 0 20px rgba(244,63,94,0.1)",
+                                "0 0 10px rgba(244,63,94,0.05)"
                             ]
                         }}
                         transition={{
-                            duration: 1.5,
+                            duration: 2,
                             repeat: Infinity,
                             ease: "linear",
-                            times: [0, 0.02, 0.04, 0.06, 0.08, 1]
+                            times: [0, 0.05, 0.1, 0.15, 0.2, 1]
                         }}
                         className="text-[40vw] md:text-[32vw] font-black italic rotate-[-6deg] select-none uppercase text-white tracking-[-0.04em]"
                         style={{ fontFamily: "'Avenir Next', 'Avenir', 'Montserrat', sans-serif", fontWeight: 900 }}
@@ -687,21 +689,27 @@ export default function AvantGardeLanding() {
                             {[
                                 {
                                     icon: Eye,
-                                    title: "Phase 01. The Discovery",
+                                    title: "Phase 01. The Atmosphere",
                                     side: "right",
                                     desc: "Beyond forms and tick-boxes. We meet you where your preferences live, decoding the unsaid through our unique brief process."
                                 },
                                 {
                                     icon: Camera,
-                                    title: "Phase 02. The Curation",
+                                    title: "Phase 02. The Blueprint",
                                     side: "left",
-                                    desc: "We design every beat. Not just the venue, but the route, the lighting, the secret menus. A multi-sensory script for your evening."
+                                    desc: "Scripting the act. Not just a booking, but a multi-sensory narrative designed for unscripted connection and cinematic rhythm."
                                 },
                                 {
-                                    icon: Compass,
-                                    title: "Phase 03. The Execution",
+                                    icon: MapPin,
+                                    title: "Phase 03. The Setting",
                                     side: "right",
-                                    desc: "You show up. We manage from the shadows. Every logistics hurdle is cleared before you even arrive. Taking credit has never been so seamless."
+                                    desc: "The stage is yours. We've archived the most exclusive corners of the city, matching them to your story's emotional frequency."
+                                },
+                                {
+                                    icon: Sparkles,
+                                    title: "Phase 04. The Resolution",
+                                    side: "left",
+                                    desc: "Witness the reveal. Your night is fully architected, from the first spark to the final goodbye. You just show up and live the plot."
                                 }
                             ].map((step, i) => (
                                 <motion.div
@@ -932,6 +940,6 @@ export default function AvantGardeLanding() {
                 </div>
             </footer>
 
-        </main>
+        </main >
     );
 }
