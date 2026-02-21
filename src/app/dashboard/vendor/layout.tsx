@@ -37,12 +37,9 @@ const vendorRoutes = [
 
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Suspense } from "react";
 
-export default function VendorLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const email = searchParams.get("email");
@@ -166,5 +163,21 @@ export default function VendorLayout({
                 </div>
             </main>
         </div>
+    );
+}
+
+export default function VendorLayout({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-slate-900">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500"></div>
+            </div>
+        }>
+            <LayoutContent>{children}</LayoutContent>
+        </Suspense>
     );
 }

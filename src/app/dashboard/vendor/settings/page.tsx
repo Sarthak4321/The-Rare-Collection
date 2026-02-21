@@ -6,8 +6,9 @@ import { Settings, User, Bell, Shield, Paintbrush, Globe, Store, Save, Loader2, 
 import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Suspense } from "react";
 
-export default function VendorSettingsPage() {
+function SettingsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const email = searchParams.get("email");
@@ -294,5 +295,17 @@ export default function VendorSettingsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function VendorSettingsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <Loader2 className="animate-spin text-slate-900" size={32} />
+            </div>
+        }>
+            <SettingsContent />
+        </Suspense>
     );
 }

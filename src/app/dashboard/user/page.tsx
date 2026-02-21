@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { motion } from "framer-motion";
 import {
     Calendar,
@@ -19,9 +19,7 @@ import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-
-
-export default function UserDashboard() {
+function DashboardContent() {
     const searchParams = useSearchParams();
     const email = searchParams.get("email");
     const [user, setUser] = React.useState<any>(null);
@@ -200,5 +198,17 @@ export default function UserDashboard() {
 
             </div>
         </div>
+    );
+}
+
+export default function UserDashboard() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-[60vh] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+            </div>
+        }>
+            <DashboardContent />
+        </Suspense>
     );
 }

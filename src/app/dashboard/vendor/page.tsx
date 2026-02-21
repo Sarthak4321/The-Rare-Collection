@@ -156,22 +156,47 @@ function DashboardContent() {
         }
 
         setUploading(true);
-        // Simulating upload for each file
         const newUrls: string[] = [];
-        for (let i = 0; i < files.length; i++) {
-            if (newService.images.length + newUrls.length >= 5) break;
-            const file = files[i];
-            const mockUrl = URL.createObjectURL(file);
-            newUrls.push(mockUrl);
-        }
 
-        setTimeout(() => {
+        try {
+            for (let i = 0; i < files.length; i++) {
+                if (newService.images.length + newUrls.length >= 5) break;
+                const file = files[i];
+
+                // 1. Get presigned URL
+                const res = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: file.name, contentType: file.type }),
+                });
+
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || "Failed to get upload URL");
+                }
+                const { url, publicUrl } = await res.json();
+
+                // 2. Upload directly to R2
+                const uploadRes = await fetch(url, {
+                    method: 'PUT',
+                    body: file,
+                    headers: { 'Content-Type': file.type }
+                });
+
+                if (!uploadRes.ok) throw new Error("Failed to upload to Cloudflare R2. Check your CORS settings.");
+                newUrls.push(publicUrl);
+            }
+
             setNewService(prev => ({
                 ...prev,
                 images: [...prev.images, ...newUrls].slice(0, 5)
             }));
+        } catch (err: any) {
+            console.error("Upload error:", err);
+            alert(err.message || "Failed to upload photos.");
+        } finally {
             setUploading(false);
-        }, 1000);
+        }
     };
 
     const removeImage = (index: number) => {
@@ -186,11 +211,33 @@ function DashboardContent() {
         if (!file) return;
 
         setUploading(true);
-        setTimeout(() => {
-            const mockUrl = URL.createObjectURL(file);
-            setNewService(prev => ({ ...prev, menuImageUrl: mockUrl }));
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: file.name, contentType: file.type }),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "Failed to get upload URL");
+            }
+            const { url, publicUrl } = await res.json();
+
+            const uploadRes = await fetch(url, {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': file.type }
+            });
+
+            if (!uploadRes.ok) throw new Error("Failed to upload menu to Cloudflare R2.");
+            setNewService(prev => ({ ...prev, menuImageUrl: publicUrl }));
+        } catch (err: any) {
+            console.error("Menu upload error:", err);
+            alert(err.message || "Failed to upload menu photo.");
+        } finally {
             setUploading(false);
-        }, 1200);
+        }
     };
 
     const handleAddService = async (e: React.FormEvent) => {
@@ -369,7 +416,7 @@ function DashboardContent() {
                         <motion.div key={service.id} initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.1 }}
                             className="group relative h-[320px] rounded-[2.5rem] overflow-hidden border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-700"
                         >
-                            <Image src={service.image_url} alt={service.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" />
+                            <Image src={service.image_url} alt={service.name} fill unoptimized className="object-cover transition-transform duration-1000 group-hover:scale-110" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/20 to-transparent" />
 
                             {/* Badges & Actions */}
@@ -519,7 +566,7 @@ function DashboardContent() {
                                         <div className="relative h-32 w-full rounded-2xl border-2 border-dashed border-slate-200 bg-white flex items-center justify-center transition-all hover:border-amber-400 group overflow-hidden">
                                             {newService.menuImageUrl ? (
                                                 <>
-                                                    <Image src={newService.menuImageUrl} alt="Menu" fill className="object-cover" />
+                                                    <Image src={newService.menuImageUrl} alt="Menu" fill unoptimized className="object-cover" />
                                                     <button type="button" onClick={() => setNewService({ ...newService, menuImageUrl: "" })} className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                                         <Trash2 size={16} className="text-white" />
                                                     </button>
@@ -570,7 +617,9 @@ function DashboardContent() {
                                 <div className="grid grid-cols-5 gap-4">
                                     {newService.images.map((img, idx) => (
                                         <motion.div initial={{ scale: 0.8 }} animate={{ scale: 1 }} key={idx} className="relative aspect-square rounded-[1.5rem] overflow-hidden group shadow-md border border-slate-100">
-                                            <Image src={img} alt={`Gallery ${idx}`} fill className="object-cover" />
+                                            {img && (
+                                                <Image src={img} alt={`Gallery ${idx}`} fill unoptimized className="object-cover" />
+                                            )}
                                             <button
                                                 type="button"
                                                 onClick={() => removeImage(idx)}

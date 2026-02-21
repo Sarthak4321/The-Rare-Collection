@@ -59,6 +59,10 @@ interface Venue {
   description?: string;
   amenities?: string[];
   hours?: string;
+  phone?: string;
+  menuHighlights?: string;
+  menuImageUrl?: string;
+  images?: string[];
 }
 
 interface Plan {
@@ -440,6 +444,7 @@ export default function DatePlanningRedesign() {
   const [selectedVenue, setSelectedVenue] = useState<Venue | null>(null);
   const [step, setStep] = useState(0); // 0: Hero, 1: Vibe, 2: Plan, 3: Venue, 4: Reveal
   const [selectedVenueForDetails, setSelectedVenueForDetails] = useState<Venue | null>(null);
+  const [mainImage, setMainImage] = useState<string | null>(null);
   const [city, setCity] = useState<"Kolkata" | "Durgapur">("Kolkata");
   const [dbServices, setDbServices] = useState<any[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -460,7 +465,7 @@ export default function DatePlanningRedesign() {
       try {
         const { data, error } = await supabase
           .from('services')
-          .select('*, vendors(category, location, shop_name)');
+          .select('*, vendors(category, location, shop_name, phone)');
 
         if (error) throw error;
         setDbServices(data || []);
@@ -529,7 +534,11 @@ export default function DatePlanningRedesign() {
             price: Number(s.price) || 0,
             tags: [s.vendors?.category || "Bespoke"],
             description: s.description,
-            hours: s.duration || "09:00 AM - 10:00 PM"
+            hours: s.duration || "09:00 AM - 10:00 PM",
+            phone: s.vendors?.phone || "+91 91629 XXXXX",
+            menuHighlights: s.menu_highlights,
+            menuImageUrl: s.menu_image_url,
+            images: s.images || []
           };
         });
 
@@ -575,6 +584,7 @@ export default function DatePlanningRedesign() {
 
   const handleVenueSelect = (venue: Venue) => {
     setSelectedVenueForDetails(venue);
+    setMainImage(venue.image);
   };
 
   const handleBookNow = () => {
@@ -1183,6 +1193,7 @@ export default function DatePlanningRedesign() {
                             src={venue.image}
                             alt={venue.name}
                             fill
+                            unoptimized
                             className="object-cover transition-transform duration-700 group-hover:scale-110"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
@@ -1401,6 +1412,7 @@ export default function DatePlanningRedesign() {
                             src={selectedVenue.image}
                             alt={selectedVenue.name}
                             fill
+                            unoptimized
                             className="object-cover opacity-60"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-transparent to-transparent" />
@@ -1499,7 +1511,10 @@ export default function DatePlanningRedesign() {
               >
                 {/* Close Button */}
                 <button
-                  onClick={() => setSelectedVenueForDetails(null)}
+                  onClick={() => {
+                    setSelectedVenueForDetails(null);
+                    setMainImage(null);
+                  }}
                   className="absolute top-6 right-6 z-30 w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white hover:bg-white hover:text-black transition-all"
                 >
                   <X size={20} />
@@ -1508,10 +1523,11 @@ export default function DatePlanningRedesign() {
                 {/* Left: Image Side */}
                 <div className="relative w-full md:w-[45%] h-[250px] md:h-full">
                   <Image
-                    src={selectedVenueForDetails.image}
+                    src={mainImage || selectedVenueForDetails.image}
                     alt={selectedVenueForDetails.name}
                     fill
-                    className="object-cover"
+                    unoptimized
+                    className="object-cover transition-all duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-8 left-8 right-8">
@@ -1541,8 +1557,8 @@ export default function DatePlanningRedesign() {
                           {selectedVenueForDetails.location}, {selectedVenueForDetails.city}
                         </div>
                         <div className="w-1 h-1 rounded-full bg-slate-200" />
-                        <div className="text-[10px] font-bold uppercase tracking-widest text-rose-500">
-                          {selectedVenueForDetails.priceRange}
+                        <div className="text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                          ₹{selectedVenueForDetails.price?.toLocaleString()} / Book
                         </div>
                       </div>
 
@@ -1566,19 +1582,68 @@ export default function DatePlanningRedesign() {
                         ))}
                       </div>
 
+                      {selectedVenueForDetails.menuHighlights && (
+                        <div className="p-6 bg-slate-50 rounded-3xl space-y-3">
+                          <div className="flex justify-between items-center">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Experience Highlights</p>
+                            {selectedVenueForDetails.menuImageUrl && (
+                              <Link
+                                href={selectedVenueForDetails.menuImageUrl}
+                                target="_blank"
+                                className="text-[9px] font-black uppercase underline text-rose-500"
+                              >
+                                View Menu
+                              </Link>
+                            )}
+                          </div>
+                          <p className="text-sm font-medium text-slate-600 leading-relaxed italic">
+                            "{selectedVenueForDetails.menuHighlights}"
+                          </p>
+                        </div>
+                      )}
+
+                      {selectedVenueForDetails.images && selectedVenueForDetails.images.length > 0 && (
+                        <div className="space-y-4">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Venue Lookbook</p>
+                          <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
+                            <div
+                              className={cn(
+                                "relative min-w-[120px] h-20 rounded-xl overflow-hidden shadow-sm border cursor-pointer transition-all",
+                                mainImage === selectedVenueForDetails.image || !mainImage ? "border-rose-500 ring-2 ring-rose-500/20" : "border-slate-100"
+                              )}
+                              onClick={() => setMainImage(selectedVenueForDetails.image)}
+                            >
+                              <Image src={selectedVenueForDetails.image} alt="Main" fill unoptimized className="object-cover" />
+                            </div>
+                            {selectedVenueForDetails.images.filter(img => img !== selectedVenueForDetails.image).map((img, i) => (
+                              <div
+                                key={i}
+                                className={cn(
+                                  "relative min-w-[120px] h-20 rounded-xl overflow-hidden shadow-sm border cursor-pointer transition-all",
+                                  mainImage === img ? "border-rose-500 ring-2 ring-rose-500/20" : "border-slate-100"
+                                )}
+                                onClick={() => setMainImage(img)}
+                              >
+                                <Image src={img} alt={`Lookbook ${i}`} fill unoptimized className="object-cover" />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Quick Details Grid */}
                       <div className="grid grid-cols-2 gap-6 pt-6 border-t border-slate-100">
                         <div className="space-y-1.5">
                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                             <Clock size={12} className="text-rose-500" /> Hours
                           </p>
-                          <p className="text-xs font-bold text-slate-900">09:00 AM - 11:00 PM</p>
+                          <p className="text-xs font-bold text-slate-900">{selectedVenueForDetails.hours || "09:00 AM - 11:00 PM"}</p>
                         </div>
                         <div className="space-y-1.5">
                           <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 flex items-center gap-2">
                             <Phone size={12} className="text-rose-500" /> Contact
                           </p>
-                          <p className="text-xs font-bold text-slate-900">+91 91629 XXXXX</p>
+                          <p className="text-xs font-bold text-slate-900">{selectedVenueForDetails.phone || "+91 91629 XXXXX"}</p>
                         </div>
                       </div>
                     </div>
@@ -1587,7 +1652,10 @@ export default function DatePlanningRedesign() {
                   {/* Actions Footer */}
                   <div className="p-8 md:p-10 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between gap-6">
                     <button
-                      onClick={() => setSelectedVenueForDetails(null)}
+                      onClick={() => {
+                        setSelectedVenueForDetails(null);
+                        setMainImage(null);
+                      }}
                       className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-slate-900 transition-colors"
                     >
                       Maybe Later
