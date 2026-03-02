@@ -30,7 +30,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
+import {
+    getVendorProfile,
+    getVendorServices,
+    getVendorBookings,
+    createServiceAction,
+    deleteServiceAction,
+    updateBookingStatusAction
+} from "@/app/actions/auth";
+import { toast } from "sonner";
 
 function DashboardContent() {
     const searchParams = useSearchParams();
@@ -90,20 +98,13 @@ function DashboardContent() {
             }
 
             try {
-                // 1. Fetch Vendor
-                const { data: vendorData, error: vError } = await supabase
-                    .from('vendors')
-                    .select('*')
-                    .eq('email', email)
-                    .single();
+                // 1. Fetch Vendor via Server Action
+                const vendorData = await getVendorProfile(email);
 
-                if (vError) {
-                    if (vError.code === 'PGRST116') {
-                        setVendor(null);
-                        setIsLoading(false);
-                        return;
-                    }
-                    throw vError;
+                if (!vendorData) {
+                    setVendor(null);
+                    setIsLoading(false);
+                    return;
                 }
                 setVendor(vendorData);
 
@@ -113,32 +114,16 @@ function DashboardContent() {
                     setNewService(prev => ({ ...prev, subCategory: config[vCat].subCategories[0] }));
                 }
 
-                // 2. Fetch Services
-                const { data: servicesData, error: sError } = await supabase
-                    .from('services')
-                    .select('*')
-                    .eq('vendor_id', vendorData.id);
+                // 2. Fetch Services via Server Action
+                const sData = await getVendorServices(vendorData.id);
+                setServices(sData);
 
-                if (sError) throw sError;
-                setServices(servicesData || []);
-
-                // 3. Fetch Bookings (with service names)
-                const { data: bookingsData, error: bError } = await supabase
-                    .from('bookings')
-                    .select('*, services(name, image_url)')
-                    .eq('vendor_id', vendorData.id)
-                    .order('created_at', { ascending: false });
-
-                if (bError) throw bError;
-                setBookings(bookingsData || []);
+                // 3. Fetch Bookings via Server Action
+                const bData = await getVendorBookings(vendorData.id);
+                setBookings(bData);
 
             } catch (err: any) {
-                console.error("Fetch error detailed:", {
-                    message: err.message,
-                    details: err.details,
-                    hint: err.hint,
-                    code: err.code
-                });
+                console.error("Fetch error detailed:", err);
             } finally {
                 setIsLoading(false);
             }
@@ -151,7 +136,7 @@ function DashboardContent() {
         if (!files || files.length === 0) return;
 
         if (newService.images.length >= 5) {
-            alert("Maximum 5 photos allowed");
+            toast.error("Maximum 5 photos allowed");
             return;
         }
 
@@ -193,7 +178,7 @@ function DashboardContent() {
             }));
         } catch (err: any) {
             console.error("Upload error:", err);
-            alert(err.message || "Failed to upload photos.");
+            toast.error(err.message || "Failed to upload photos.");
         } finally {
             setUploading(false);
         }
@@ -234,7 +219,7 @@ function DashboardContent() {
             setNewService(prev => ({ ...prev, menuImageUrl: publicUrl }));
         } catch (err: any) {
             console.error("Menu upload error:", err);
-            alert(err.message || "Failed to upload menu photo.");
+            toast.error(err.message || "Failed to upload menu photo.");
         } finally {
             setUploading(false);
         }
@@ -246,26 +231,28 @@ function DashboardContent() {
 
         try {
             const finalName = newService.name || newService.subCategory;
-            const { data, error } = await supabase
-                .from('services')
-                .insert([{
-                    vendor_id: vendor.id,
-                    name: finalName,
-                    description: newService.description,
-                    image_url: newService.images[0] || "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&q=80",
-                    images: newService.images,
-                    address: newService.address,
-                    price: parseFloat(newService.price) || 0,
-                    duration: newService.duration,
-                    menu_highlights: newService.menuHighlights,
-                    menu_image_url: newService.menuImageUrl,
-                    icon: 'Sparkles'
-                }])
-                .select();
+            const serviceData = {
+                vendor_id: vendor.id,
+                name: finalName,
+                description: newService.description,
+                image_url: newService.images[0] || "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400&q=80",
+                images: newService.images,
+                address: newService.address,
+                price: parseFloat(newService.price) || 0,
+                duration: newService.duration,
+                menu_highlights: newService.menuHighlights,
+                menu_image_url: newService.menuImageUrl,
+                icon: 'Sparkles',
+            };
 
-            if (error) throw error;
-            setServices([...services, data[0]]);
+            const result = await createServiceAction(serviceData);
+
+            if (!result.success) throw new Error(result.error);
+            const data = result.data;
+
+            if (data) setServices([...services, data]);
             setIsAddingService(false);
+            toast.success("Service added successfully!");
             setNewService({
                 name: "",
                 subCategory: "",
@@ -277,9 +264,9 @@ function DashboardContent() {
                 menuHighlights: "",
                 menuImageUrl: ""
             });
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert("Failed to add service");
+            toast.error(`Failed to add service: ${err.message}`);
         }
     };
 
@@ -287,34 +274,31 @@ function DashboardContent() {
         if (!confirm("Are you sure you want to delete this experience from your catalog? This action cannot be undone.")) return;
 
         try {
-            const { error } = await supabase
-                .from('services')
-                .delete()
-                .eq('id', id);
+            const result = await deleteServiceAction(id);
 
-            if (error) throw error;
+            if (!result.success) throw new Error(result.error);
+
             setServices(services.filter(s => s.id !== id));
+            toast.success("Service deleted");
         } catch (err) {
             console.error(err);
-            alert("Failed to delete service. Please try again.");
+            toast.error("Failed to delete service. Please try again.");
         }
     };
 
     const handleUpdateBookingStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
         try {
-            const { error } = await supabase
-                .from('bookings')
-                .update({ status })
-                .eq('id', id);
+            const result = await updateBookingStatusAction(id, status);
 
-            if (error) throw error;
+            if (!result.success) throw new Error(result.error);
 
             setBookings(prev => prev.map(b =>
                 b.id === id ? { ...b, status } : b
             ));
+            toast.success(`Booking ${status === 'confirmed' ? 'confirmed' : 'cancelled'}`);
         } catch (err) {
             console.error(err);
-            alert(`Failed to ${status === 'confirmed' ? 'approve' : 'reject'} booking`);
+            toast.error(`Failed to ${status === 'confirmed' ? 'approve' : 'reject'} booking`);
         }
     };
 

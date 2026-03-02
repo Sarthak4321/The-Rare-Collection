@@ -36,7 +36,7 @@ const vendorRoutes = [
 ];
 
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getVendorProfile } from "@/app/actions/auth";
 import { Suspense } from "react";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -48,12 +48,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         async function fetchVendor() {
             if (!email) return;
-            const { data } = await supabase
-                .from('vendors')
-                .select('shop_name')
-                .eq('email', email)
-                .single();
-            if (data) setVendor(data);
+            try {
+                const data = await getVendorProfile(email);
+                if (data) {
+                    setVendor(data);
+                }
+            } catch (err) {
+                console.error("Error fetching vendor:", err);
+            }
         }
         fetchVendor();
     }, [email]);

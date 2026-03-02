@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
@@ -7,49 +7,67 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles, User, Phone, Ch
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Logo from "../../../components/Logo";
-import { supabase } from "@/lib/supabase";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
+import { syncUserToDb } from "@/app/actions/auth";
 
-export default function SignupPage() {
+function SignupContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [name, setName] = useState("");
+    const [name, setName] = useState(searchParams.get("name") || "");
     const [shopName, setShopName] = useState("");
-    const [email, setEmail] = useState("");
+    const [email, setEmail] = useState(searchParams.get("email") || "");
     const [phone, setPhone] = useState("");
     const [gender, setGender] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState<"user" | "vendor">("user");
     const [vendorCategory, setVendorCategory] = useState<string>("");
     const [location, setLocation] = useState<"kolkata" | "durgapur">("kolkata");
-    const router = useRouter();
+    const [firebaseUid, setFirebaseUid] = useState<string | null>(searchParams.get("uid") || null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         try {
-            // Actual Supabase Integration
-            const { error } = await supabase
-                .from(role === 'vendor' ? 'vendors' : 'users')
-                .insert([
-                    role === 'vendor' ? {
-                        shop_name: shopName,
-                        owner_name: name,
-                        email,
-                        phone,
-                        category: vendorCategory,
-                        location,
-                        password, // Adding password for completeness, though auth should handle this normally
-                    } : {
-                        full_name: name,
-                        email,
-                        phone,
-                        gender,
-                        password,
-                    }
-                ]);
+            let userUid = firebaseUid;
 
-            if (error) throw error;
+            if (!userUid) {
+                // 1. Create user in Firebase normally
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                userUid = userCredential.user.uid;
+            }
+
+            // 2. Insert record into database using Server Action
+            const syncData = role === 'vendor' ? {
+                id: userUid,
+                shop_name: shopName,
+                owner_name: name,
+                email,
+                phone,
+                category: vendorCategory,
+                location,
+            } : {
+                id: userUid,
+                full_name: name,
+                email,
+                phone,
+                gender,
+            };
+
+            const result = await syncUserToDb(role, syncData);
+
+            if (!result.success) {
+                console.error("DB update failed:", result.error);
+                toast.error(`Failed to sync data to database: ${result.error}`);
+                return;
+            }
 
             if (role === "vendor") {
                 router.push(`/dashboard/vendor?email=${email}`);
@@ -58,7 +76,34 @@ export default function SignupPage() {
             }
         } catch (err: any) {
             console.error("Signup error:", err);
-            alert(`Signup failed: ${err.message || "Please check your Supabase connection and schema."}`);
+            alert(`Signup failed: ${err.message || "Please check your network."}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleAuth = async () => {
+        try {
+            setIsLoading(true);
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Pre-populate form fields
+            setName(user.displayName || "");
+            setEmail(user.email || "");
+            setFirebaseUid(user.uid);
+
+            toast.success("Successfully authenticated with Google. Please complete your profile details below.");
+
+            // We set a flag or keep the uid in mind
+            // Actually, we can just let them click the normal Submit button now
+            // But they still need to provide a password if they want to login normally later
+            // For now, let's just let the form be filled.
+
+        } catch (err: any) {
+            console.error("Google auth error:", err);
+            toast.error(`Google authentication failed: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -101,7 +146,7 @@ export default function SignupPage() {
                 </div>
 
                 <div className="relative z-10 text-xs text-white/30 flex justify-between">
-                    <p>© 2026 The Rare Collection</p>
+                    <p>┬⌐ 2026 The Rare Collection</p>
                     <div className="flex gap-4">
                         <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
                         <Link href="#" className="hover:text-white transition-colors">Terms</Link>
@@ -132,7 +177,12 @@ export default function SignupPage() {
                         </div>
 
                         {/* Social Login */}
-                        <button className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all focus:ring-4 focus:ring-slate-100 outline-none">
+                        <button
+                            type="button"
+                            onClick={handleGoogleAuth}
+                            disabled={isLoading}
+                            className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all focus:ring-4 focus:ring-slate-100 outline-none disabled:opacity-70"
+                        >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -331,30 +381,32 @@ export default function SignupPage() {
                                 </div>
                             )}
 
-                            <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-700" htmlFor="password">Password</label>
-                                <div className="relative group">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
-                                        <Lock size={18} />
+                            {!firebaseUid && (
+                                <div className="space-y-2">
+                                    <label className="text-sm font-semibold text-slate-700" htmlFor="password">Password</label>
+                                    <div className="relative group">
+                                        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-800 transition-colors">
+                                            <Lock size={18} />
+                                        </div>
+                                        <input
+                                            id="password"
+                                            type={showPassword ? "text" : "password"}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required={!firebaseUid}
+                                            className="w-full h-[52px] pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
+                                            placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors outline-none"
+                                        >
+                                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                        </button>
                                     </div>
-                                    <input
-                                        id="password"
-                                        type={showPassword ? "text" : "password"}
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        className="w-full h-[52px] pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
-                                        placeholder="••••••••"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 transition-colors outline-none"
-                                    >
-                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                                    </button>
                                 </div>
-                            </div>
+                            )}
 
                             <button
                                 type="submit"
@@ -382,5 +434,17 @@ export default function SignupPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function SignupPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
+                <Loader2 className="animate-spin text-rose-500" size={32} />
+            </div>
+        }>
+            <SignupContent />
+        </Suspense>
     );
 }

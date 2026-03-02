@@ -41,9 +41,10 @@ import {
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 import FloatingAura from "@/components/FloatingAura";
-import { supabase } from "@/lib/supabase";
+import { auth } from "@/lib/firebase";
 
 interface Venue {
   id: string;
@@ -438,6 +439,8 @@ const GrainOverlay = () => (
   </div>
 );
 
+import { getAllServicesWithVendors, createBookingAction } from "@/app/actions/auth";
+
 export default function DatePlanningRedesign() {
   const [selectedVibe, setSelectedVibe] = useState<Vibe>(VIBES[0]);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
@@ -463,12 +466,10 @@ export default function DatePlanningRedesign() {
   React.useEffect(() => {
     async function fetchServices() {
       try {
-        const { data, error } = await supabase
-          .from('services')
-          .select('*, vendors(category, location, shop_name, phone)');
-
-        if (error) throw error;
-        setDbServices(data || []);
+        const servicesData = await getAllServicesWithVendors();
+        if (servicesData) {
+          setDbServices(servicesData);
+        }
       } catch (err) {
         console.error("Error fetching services:", err);
       } finally {
@@ -486,32 +487,29 @@ export default function DatePlanningRedesign() {
         // This is a heuristic mapping based on the seed data and common sense
         const filteredServices = dbServices.filter(s => {
           const category = s.vendors?.category;
-          const location = s.vendors?.location;
+          const vendorLocation = s.vendors?.location || "";
 
-          // Match by category
-          const isCategoryMatch =
+          // 0. Strict City Filter
+          if (vendorLocation.toLowerCase() !== city.toLowerCase()) return false;
+
+          // 1. Vibe/Category Match
+          const isVibeMatch =
             (vibe.id === 'romantic' && category === 'hospitality') ||
             (vibe.id === 'playful' && category === 'workshops') ||
-            (vibe.id === 'calm' && category === 'tour') ||
+            (vibe.id === 'calm' && (category === 'tour' || category === 'hospitality')) ||
+            (vibe.id === 'adventure' && category === 'tour') ||
             (vibe.id === 'mysterious' && category === 'hospitality');
 
-          if (!isCategoryMatch) return false;
+          if (!isVibeMatch) return false;
 
-          // Match by "Plan Type" (fuzzy match on name/description or subCategory if we had it)
-          // For now, let's just use some keywords
-          const keywords: Record<string, string[]> = {
-            'cafe': ['cafe', 'coffee', 'brew'],
-            'trekking': ['trek', 'hill', 'mountain'],
-            'paint': ['paint', 'art', 'canvas'],
-            'pottery': ['pottery', 'clay'],
-            'candle': ['candle', 'scent'],
-            'hotel': ['hotel', 'stay', 'private space'],
-            'theater': ['theater', 'cinema', 'screen']
-          };
-
-          const planKeywords = keywords[plan.id] || [];
-          const textToSearch = (s.name + " " + (s.description || "")).toLowerCase();
-          const isPlanMatch = planKeywords.some(kw => textToSearch.includes(kw));
+          // 2. Simple Category/Plan matching as fallback
+          const isPlanMatch =
+            (plan.id === 'cafe' && category === 'hospitality') ||
+            (plan.id === 'workshops' && category === 'workshops') ||
+            (plan.id === 'tour' && category === 'tour') ||
+            (plan.id === 'hotel' && category === 'hospitality') ||
+            (plan.id === 'theatre' && category === 'hospitality') ||
+            (plan.id === 'space' && category === 'hospitality');
 
           return isPlanMatch;
         });
@@ -527,7 +525,7 @@ export default function DatePlanningRedesign() {
             vendorId: s.vendor_id,
             name: s.name,
             location: s.address || "TBA",
-            city: (s.vendors?.location === 'Durgapur' ? 'Durgapur' : 'Kolkata'),
+            city: (s.vendors?.location?.toLowerCase() === 'durgapur' ? 'Durgapur' : 'Kolkata'),
             rating: parseFloat(stableRating),
             image: s.image_url || "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=800&q=80",
             priceRange: s.price > 1000 ? "$$$" : "$$",
@@ -554,13 +552,19 @@ export default function DatePlanningRedesign() {
         plans: updatedPlans
       };
     });
-  }, [dbServices]);
+  }, [dbServices, city]);
 
-  // Update selectedVibe when dynamicVibes changes to keep it in sync
+  // Update selected states when dynamicVibes changes to keep them in sync
   React.useEffect(() => {
-    const updated = dynamicVibes.find(v => v.id === selectedVibe.id);
-    if (updated) setSelectedVibe(updated);
-  }, [dynamicVibes, selectedVibe.id]);
+    const updatedVibe = dynamicVibes.find(v => v.id === selectedVibe.id);
+    if (updatedVibe) {
+      setSelectedVibe(updatedVibe);
+      if (selectedPlan) {
+        const updatedPlan = updatedVibe.plans.find(p => p.id === selectedPlan.id);
+        if (updatedPlan) setSelectedPlan(updatedPlan);
+      }
+    }
+  }, [dynamicVibes, selectedVibe.id, selectedPlan?.id]);
 
   const { scrollYProgress } = useScroll();
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 1.1]);
@@ -603,25 +607,23 @@ export default function DatePlanningRedesign() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('bookings')
-        .insert([{
-          vendor_id: selectedVenue.vendorId,
-          service_id: selectedVenue.id,
-          customer_name: bookingForm.name || "Guest User",
-          customer_email: "guest@example.com", // Fallback for now
-          booking_date: bookingForm.date,
-          booking_time: bookingForm.time,
-          revenue: selectedVenue.price || (selectedVenue.priceRange === "$$$" ? 1500 : 800),
-          status: 'pending'
-        }]);
+      const result = await createBookingAction({
+        vendor_id: selectedVenue.vendorId,
+        service_id: selectedVenue.id,
+        customer_name: bookingForm.name || "Guest User",
+        customer_email: auth.currentUser?.email || "guest@example.com",
+        booking_date: bookingForm.date,
+        booking_time: bookingForm.time,
+        revenue: selectedVenue.price || (selectedVenue.priceRange === "$$$" ? 1500 : 800),
+        status: 'pending',
+      });
 
-      if (error) throw error;
+      if (!result.success) throw new Error(result.error);
 
-      router.push("/dashboard/user");
-    } catch (err) {
+      router.push(`/dashboard/user?email=${auth.currentUser?.email || "guest@example.com"}`);
+    } catch (err: any) {
       console.error("Booking error:", err);
-      alert("Something went wrong with your reservation.");
+      toast.error(err.message || "Something went wrong with your reservation.");
     } finally {
       setIsSubmitting(false);
     }
@@ -1178,8 +1180,13 @@ export default function DatePlanningRedesign() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {selectedPlan.venues.filter(v => v.city === city).length > 0 ? (
-                    selectedPlan.venues.filter(v => v.city === city).map((venue, i) => (
+                  {isLoadingData ? (
+                    <div className="col-span-full py-32 flex flex-col items-center justify-center">
+                      <Loader2 className="animate-spin text-rose-500 mb-4" size={32} />
+                      <p className="text-white/40 font-serif italic uppercase tracking-widest text-[9px]">Analyzing your narrative...</p>
+                    </div>
+                  ) : selectedPlan.venues.length > 0 ? (
+                    selectedPlan.venues.map((venue, i) => (
                       <motion.div
                         key={venue.id}
                         initial={{ opacity: 0, y: 20 }}

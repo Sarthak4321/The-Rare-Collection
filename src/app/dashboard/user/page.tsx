@@ -17,7 +17,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getUserProfile, getUserBookings } from "@/app/actions/auth";
 
 function DashboardContent() {
     const searchParams = useSearchParams();
@@ -33,23 +33,15 @@ function DashboardContent() {
                 return;
             }
             try {
-                // 1. Fetch User
-                const { data: userData, error: userError } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('email', email)
-                    .single();
+                // 1. Fetch User via Server Action
+                const userData = await getUserProfile(email);
+                if (userData) {
+                    setUser(userData);
+                }
 
-                if (userData) setUser(userData);
-
-                // 2. Fetch Bookings
-                const { data: bookingsData, error: bookingsError } = await supabase
-                    .from('bookings')
-                    .select('*, services(*), vendors(*)')
-                    .eq('customer_email', email)
-                    .order('booking_date', { ascending: true });
-
-                if (bookingsData) setBookings(bookingsData);
+                // 2. Fetch Bookings via Server Action
+                const bData = await getUserBookings(email);
+                setBookings(bData);
             } catch (err) {
                 console.error("Dashboard fetch error:", err);
             } finally {

@@ -1,12 +1,16 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Sparkles } from "lucide-react";
 import Logo from "../../../components/Logo";
-import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { getVendorProfile, getUserProfile } from "@/app/actions/auth";
+
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { toast } from "sonner";
 
 export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
@@ -20,47 +24,64 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            // 1. Try to find in Vendors
-            const { data: vendor, error: vError } = await supabase
-                .from('vendors')
-                .select('*')
-                .eq('email', email)
-                .single();
+            // 1. Authenticate with Firebase
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // 2. Check database for role via Server Action
+            const vendor = await getVendorProfile(email);
 
             if (vendor) {
-                if (vendor.password === password) {
-                    router.push(`/dashboard/vendor?email=${email}`);
-                    return;
-                } else {
-                    alert("Incorrect password");
-                    setIsLoading(false);
-                    return;
-                }
+                router.push(`/dashboard/vendor?email=${email}`);
+                return;
             }
 
-            // 2. Try to find in Users
-            const { data: user, error: uError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('email', email)
-                .single();
+            const userData = await getUserProfile(email);
 
-            if (user) {
-                if (user.password === password) {
-                    router.push(`/dashboard/user?email=${email}`);
-                    return;
-                } else {
-                    alert("Incorrect password");
-                    setIsLoading(false);
-                    return;
-                }
+            if (userData) {
+                router.push(`/dashboard/user?email=${email}`);
+                return;
             }
 
-            alert("Account not found. Please sign up.");
+            // If auth worked but no profile in Supabase, we might need to handle this (e.g. redirect to profile setup)
+            toast.error("Authenticated but profile not found in database.");
 
         } catch (err: any) {
             console.error("Login error:", err);
-            alert("Login failed. Please try again.");
+            toast.error(`Login failed: ${err.message || "Please check your credentials."}`);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGoogleAuth = async () => {
+        try {
+            setIsLoading(true);
+            const provider = new GoogleAuthProvider();
+            const result = await signInWithPopup(auth, provider);
+            const user = result.user;
+
+            // Check if vendor or user via Server Action
+            const vendor = await getVendorProfile(user.email!);
+
+            if (vendor) {
+                router.push(`/dashboard/vendor?email=${user.email}`);
+                return;
+            }
+
+            const userData = await getUserProfile(user.email!);
+
+            if (userData) {
+                router.push(`/dashboard/user?email=${user.email}`);
+                return;
+            }
+
+            // If user doesn't exist in Supabase, redirect to signup
+            toast.info("Welcome! Please complete your registration choice.");
+            router.push(`/auth/signup?email=${user.email}&name=${user.displayName}&uid=${user.uid}`);
+        } catch (err: any) {
+            console.error("Google auth error:", err);
+            toast.error("Google authentication failed.");
         } finally {
             setIsLoading(false);
         }
@@ -103,7 +124,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="relative z-10 text-xs text-white/30 flex justify-between">
-                    <p>© 2026 The Rare Collection</p>
+                    <p>┬⌐ 2026 The Rare Collection</p>
                     <div className="flex gap-4">
                         <Link href="#" className="hover:text-white transition-colors">Privacy</Link>
                         <Link href="#" className="hover:text-white transition-colors">Terms</Link>
@@ -134,7 +155,12 @@ export default function LoginPage() {
                         </div>
 
                         {/* Social Login */}
-                        <button className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all focus:ring-4 focus:ring-slate-100 outline-none">
+                        <button
+                            type="button"
+                            onClick={handleGoogleAuth}
+                            disabled={isLoading}
+                            className="w-full h-[52px] flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all focus:ring-4 focus:ring-slate-100 outline-none disabled:opacity-70"
+                        >
                             <svg className="w-5 h-5" viewBox="0 0 24 24">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -185,7 +211,7 @@ export default function LoginPage() {
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         className="w-full h-[52px] pl-11 pr-12 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-slate-800 focus:ring-4 focus:ring-slate-100 transition-all outline-none font-medium"
-                                        placeholder="••••••••"
+                                        placeholder="ΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇóΓÇó"
                                     />
                                     <button
                                         type="button"

@@ -36,7 +36,7 @@ const userRoutes = [
 ];
 
 import { useSearchParams } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { getUserProfile } from "@/app/actions/auth";
 import { Suspense } from "react";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -49,12 +49,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     React.useEffect(() => {
         async function fetchUser() {
             if (!email) return;
-            const { data } = await supabase
-                .from('users')
-                .select('full_name')
-                .eq('email', email)
-                .single();
-            if (data) setUser(data);
+            try {
+                const data = await getUserProfile(email);
+                if (data) {
+                    setUser(data);
+                }
+            } catch (err) {
+                console.error("Error fetching user:", err);
+            }
         }
         fetchUser();
     }, [email]);

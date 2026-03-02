@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Settings, User, Bell, Shield, Paintbrush, Globe, Store, Save, Loader2, LogOut, MapPin, Phone, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useSearchParams, useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import { Suspense } from "react";
+import { getVendorProfile, updateVendorProfile } from "@/app/actions/auth";
 
 function SettingsContent() {
     const searchParams = useSearchParams();
@@ -32,23 +31,19 @@ function SettingsContent() {
         async function fetchVendor() {
             if (!email) return;
             try {
-                const { data, error } = await supabase
-                    .from('vendors')
-                    .select('*')
-                    .eq('email', email)
-                    .single();
-
-                if (error) throw error;
-                setVendor(data);
-                setBusinessForm({
-                    shop_name: data.shop_name,
-                    category: data.category,
-                    location: data.location || "Kolkata"
-                });
-                setPersonalForm({
-                    owner_name: data.owner_name,
-                    phone: data.phone || ""
-                });
+                const data = await getVendorProfile(email);
+                if (data) {
+                    setVendor(data);
+                    setBusinessForm({
+                        shop_name: data.shop_name,
+                        category: data.category,
+                        location: data.location || "Kolkata"
+                    });
+                    setPersonalForm({
+                        owner_name: data.owner_name,
+                        phone: data.phone || ""
+                    });
+                }
             } catch (err) {
                 console.error("Error fetching vendor:", err);
             } finally {
@@ -59,25 +54,23 @@ function SettingsContent() {
     }, [email]);
 
     const handleSave = async () => {
-        if (!vendor) return;
+        if (!vendor || !email) return;
         setIsSaving(true);
         try {
-            const { error } = await supabase
-                .from('vendors')
-                .update({
-                    shop_name: businessForm.shop_name,
-                    category: businessForm.category,
-                    location: businessForm.location,
-                    owner_name: personalForm.owner_name,
-                    phone: personalForm.phone
-                })
-                .eq('id', vendor.id);
+            const result = await updateVendorProfile(email, {
+                shop_name: businessForm.shop_name,
+                category: businessForm.category,
+                location: businessForm.location,
+                owner_name: personalForm.owner_name,
+                phone: personalForm.phone
+            });
 
-            if (error) throw error;
-            alert("Settings updated successfully");
-        } catch (err) {
+            if (!result.success) throw new Error(result.error);
+
+            toast.success("Settings updated successfully");
+        } catch (err: any) {
             console.error(err);
-            alert("Failed to update settings");
+            toast.error(err.message || "Failed to update settings");
         } finally {
             setIsSaving(false);
         }
